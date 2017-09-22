@@ -1,0 +1,39 @@
+cmake_minimum_required (VERSION 2.8)
+
+project(actctx)
+add_definitions(-DUNICODE -D_UNICODE)
+enable_language(ASM_MASM)
+
+set(CompilerFlags
+        CMAKE_CXX_FLAGS
+        CMAKE_CXX_FLAGS_DEBUG
+        CMAKE_CXX_FLAGS_RELEASE
+        CMAKE_C_FLAGS
+        CMAKE_C_FLAGS_DEBUG
+        CMAKE_C_FLAGS_RELEASE
+        )
+foreach(CompilerFlag ${CompilerFlags})
+  string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
+endforeach()
+
+string(REPLACE "/pdb:<TARGET_PDB>" "" CMAKE_C_LINK_EXECUTABLE ${CMAKE_C_LINK_EXECUTABLE})
+string(REPLACE "/pdb:<TARGET_PDB>" "" CMAKE_CXX_LINK_EXECUTABLE ${CMAKE_CXX_LINK_EXECUTABLE})
+
+string(REPLACE "/O2" "/Od" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /GS-")
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Gz")
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        add_executable(actctx main.c manifest.manifest ldrdebug.c asm_code64/asm_code.asm)
+elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+        add_executable(actctx main.c manifest.manifest ldrdebug.c asm_code32/asm_code.asm)
+endif()
+
+set_target_properties(actctx PROPERTIES LINK_FLAGS "/SUBSYSTEM:CONSOLE")
+
+add_library(sxsoaps SHARED sxsoaps.c)
+add_library(redirecteddll SHARED redirecteddll.c)
+
+target_link_libraries(actctx comctl32.lib ntdll.lib)
+
